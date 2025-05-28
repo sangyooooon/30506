@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-
+pip install plotly
 # 페이지 설정
 st.set_page_config(page_title="당뇨병 데이터 시각화", layout="wide")
 
