@@ -1,16 +1,19 @@
-# 📍 배송지 지도 + GPT 분석 웹앱
+# 📍 Streamlit 배송지 지도 + GPT 분석 앱
 
-Flask와 Leaflet.js를 사용해 배송 위치를 시각화하고, GPT-4 API를 통해 데이터를 분석하는 웹앱입니다.
+Streamlit을 사용하여 CSV 배송 좌표를 지도에 표시하고, GPT-4를 통해 데이터 분석 질문을 받을 수 있는 간단한 대시보드입니다.
+
+## 📁 파일 구성
+
+- `main.py`: Streamlit 앱
+- `Delivery.csv`: 배송 위치 데이터
+- `requirements.txt`: 필요한 라이브러리
+- `README.md`: 사용법 안내
 
 ## 🚀 실행 방법
 
-### 1. 사전 준비
-- Python 3.8 이상 설치
-- [OpenAI API 키](https://platform.openai.com/account/api-keys) 확보
+1. Python 설치 (3.8 이상 권장)
 
-### 2. 저장소 클론 및 설치
+2. 의존성 설치
 
 ```bash
-git clone https://github.com/your-username/your-repo.git
-cd your-repo
 pip install -r requirements.txt
