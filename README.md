@@ -1,1 +1,3 @@
-# 30506
+flask
+pandas
+openai
