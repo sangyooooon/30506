@@ -1,51 +1,55 @@
 import streamlit as st
 import pandas as pd
-import openai
+from sklearn.cluster import KMeans
 import folium
 from streamlit_folium import st_folium
-import os
 
-# OpenAI API 키 설정
-openai.api_key = os.getenv("OPENAI_API_KEY") or "your-api-key-here"
+st.set_page_config(page_title="배달 위치 K-Means 클러스터링", layout="wide")
 
-# CSV 불러오기
-df = pd.read_csv("Delivery.csv")
+st.title("🚚 배달 위치 K-Means 클러스터링 지도")
+st.markdown("구글 스프레드시트 데이터를 불러와 K-Means 군집화 후 지도에 시각화합니다.")
 
-st.set_page_config(layout="wide")
-st.title("📍 배송지 시각화 + GPT 분석")
+# 구글 스프레드시트 csv 링크 (export?format=csv&gid=숫자 형태)
+sheet_url = "https://docs.google.com/spreadsheets/d/1QN1pWq2dLvLLl3Rejwxa_vIwcGg9pQic9dK6pZC-TT4/export?format=csv&gid=778451492"
+df = pd.read_csv(sheet_url)
 
-# 지도 표시
-m = folium.Map(location=[df["Latitude"].mean(), df["Longitude"].mean()], zoom_start=11)
-for _, row in df.iterrows():
-    folium.Marker(
-        location=[row["Latitude"], row["Longitude"]],
-        popup=f"배송지 #{row['Num']}",
-        icon=folium.Icon(color="blue")
+st.subheader("데이터 미리보기")
+st.dataframe(df.head())
+
+# 위도/경도 컬럼명
+lat_col = 'Latitude'
+lon_col = 'Longitude'
+
+# 클러스터 개수 선택
+n_clusters = st.slider("클러스터 개수 선택 (K)", min_value=2, max_value=10, value=3)
+
+coords = df[[lat_col, lon_col]]
+
+# K-Means 클러스터링
+kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+df['Cluster'] = kmeans.fit_predict(coords)
+
+# 지도 중앙 좌표 계산
+center = [df[lat_col].mean(), df[lon_col].mean()]
+m = folium.Map(location=center, zoom_start=12)
+
+colors = ['red', 'blue', 'green', 'purple', 'orange', 'darkred', 'lightred', 'beige', 'darkblue', 'darkgreen']
+
+# 마커 추가
+for i, row in df.iterrows():
+    folium.CircleMarker(
+        location=[row[lat_col], row[lon_col]],
+        radius=6,
+        color=colors[int(row['Cluster']) % len(colors)],
+        fill=True,
+        fill_opacity=0.8,
+        popup=f"Cluster {row['Cluster']}"
     ).add_to(m)
 
-st_folium(m, width=700, height=500)
+st.subheader("클러스터링 결과 지도")
+st_folium(m, width=900, height=600)
 
-# GPT 질문 입력
-st.subheader("💬 GPT-4에게 배송 데이터를 질문해보세요")
-question = st.text_area("질문을 입력하세요 (예: 배송지 분포가 특정 지역에 몰려 있나요?)")
+st.subheader("클러스터링 결과 데이터")
+st.dataframe(df)
 
-if st.button("GPT에게 질문하기") and question:
-    with st.spinner("GPT가 분석 중입니다..."):
-        sample_data = df.head(50)
-        prompt = "다음은 배송 위치 데이터입니다:\n" + \
-                 "\n".join(f"{row.Num}, {row.Latitude}, {row.Longitude}" for _, row in sample_data.iterrows()) + \
-                 f"\n\n질문: {question}"
-
-        try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "당신은 배송 좌표 데이터를 분석하는 도우미입니다."},
-                    {"role": "user", "content": prompt}
-                ]
-            )
-            answer = response.choices[0].message.content
-            st.success("✅ GPT 응답:")
-            st.markdown(answer)
-        except Exception as e:
-            st.error(f"❌ 오류 발생: {e}")
+st.plotly_chart(fig)
